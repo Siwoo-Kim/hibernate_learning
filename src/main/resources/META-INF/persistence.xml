@@ -2,12 +2,14 @@
 <persistence xmlns="http://xmlns.jcp.org/xml/ns/persistence" version="2.1">
 
     <persistence-unit name="hibernate">
-        <properties >
+        <properties>
             <property name="javax.persistence.jdbc.driver" value="oracle.jdbc.driver.OracleDriver"></property>
+
             <property name="javax.persistence.jdbc.user" value="java"></property>
             <property name="javax.persistence.jdbc.password" value="java"></property>
             <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin://localhost:1521/orcl"></property>
             <property name="org.hibernate.dialect.Oracle10gDialect" value="org.hibernate.dialect.Oracle10gDialect"></property>
+
             <property name="hibernate.hbm2ddl.auto" value="create" />
 
 
@@ -15,10 +17,7 @@
             <property name="hibernate.format_sql" value="true"></property>
             <property name="hibernate.use_sql_comments" value="true" ></property>
             <property name="hibernate.id.new_generator_mappings" value="true" />
-
         </properties>
 
-
     </persistence-unit>
-
 </persistence>

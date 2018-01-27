@@ -13,9 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @Log
 public class MemberTest {
@@ -34,6 +32,8 @@ public class MemberTest {
             entityTransaction.commit();
 
         }catch(Exception e){
+            e.printStackTrace();
+            fail();
             entityTransaction.rollback();
         }finally{
             entityManager.close();
@@ -79,6 +79,63 @@ public class MemberTest {
 
 
         });
+    }
+
+    @Test
+    public void logic2(){
+
+        strategy_context((entityManager) -> {
+
+            //4 STATE - TRANSIENT / MANAGED / DETACHED / REMOVED
+
+            //Transient
+            Member member = Member.builder().age(30).username("Kim").build();
+
+            //Managed
+            entityManager.persist(member);
+
+
+            Member foundMember = entityManager.createQuery("select m from Member m where m.id = :id",Member.class)
+                    .setParameter("id",member.getId()).getSingleResult();
+
+
+            assertThat(member,is(foundMember));
+
+            //Detached
+            entityManager.detach(member);
+
+
+        });
+    }
+
+    @Test
+    public void detect_dirty(){
+
+        strategy_context((entityManager -> {
+
+            Member member = Member.builder()
+                    .username("member1").age(30).build();
+
+            entityManager.persist(member);
+
+            String newName = "New Name1";
+            int newAge = 99;
+
+            member.setAge(newAge);
+            member.setUsername(newName);
+
+            //There is no such update() method. It will automatically update the entity
+            //when entitymanager flush
+
+            entityManager.flush();
+
+            Member foundMember = entityManager.find(Member.class,member.getId());
+
+            assertThat(foundMember.getAge(),is(newAge));
+            assertThat(foundMember.getUsername(),is(newName));
+
+            log.warning(foundMember::toString);
+        }));
     }
 
 }
