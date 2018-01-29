@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 public class ConsoleProgramTest {
@@ -41,10 +42,16 @@ public class ConsoleProgramTest {
                 handleViewCommand(commands);
 
             }else if(commands[0].equalsIgnoreCase("list")){
+                
+                handleListCommand(commands);
 
-            }else if(commands[0].equalsIgnoreCase("change")){
+            }else if(commands[0].equalsIgnoreCase("changename")){
 
-            }else if(commands[0].equalsIgnoreCase("withdraw")){
+                handleChangeName(commands);
+
+            }else if(commands[0].equalsIgnoreCase("remove")){
+
+                handleRemoveCommand(commands);
 
             }else{
 
@@ -57,6 +64,72 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleRemoveCommand(String[] commands) {
+
+        if(commands.length != 2){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:remove [email]");
+            return;
+
+        }
+
+        try{
+
+            ConsoleProgramTest.userService.remove(commands[1]);
+            System.out.println("Remove command is successful");
+
+        }catch (UserServiceImpl.UserNotFoundException e){
+
+            System.out.println("Remove command is rejected");
+            System.out.println("Message : "+e.getMessage());
+            System.out.println("Code : "+e.getCode());
+
+        }
+    }
+
+    private static void handleListCommand(String[] commands) {
+
+        List<User> userList = ConsoleProgramTest.userService.getUsers();
+
+        if(userList.isEmpty()){ System.out.println("No user is in database"); }
+        else{
+
+            userList.stream().forEach( user ->
+                    System.out.printf("| %s | %s | %s \n",
+                            user.getEmail(),
+                            user.getName(),
+                            user.getJoinDate().format(ConsoleProgramTest.dateTimeFormatter)));
+        }
+
+    }
+
+
+    private static void handleChangeName(String[] commands) {
+
+        if(commands.length != 3){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:changename [email] [newName]");
+            return;
+
+        }
+
+        try{
+
+            ConsoleProgramTest.userService.changeName(commands[1],commands[2]);
+            System.out.println("User name is changed");
+
+        }catch (UserServiceImpl.UserNotFoundException e){
+
+            System.out.println("Changename command is rejected");
+            System.out.println("Message : "+e.getMessage());
+            System.out.println("Code : "+e.getCode());
+
+        }
+
     }
 
     private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-mm-dd hh:MM:ss");
