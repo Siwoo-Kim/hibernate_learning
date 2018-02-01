@@ -1,6 +1,7 @@
 package com.hibernate.learning.service;
 
 import com.hibernate.learning.domain.Member;
+import com.hibernate.learning.domain.MemberDetail;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -97,6 +98,31 @@ public class MemberServiceImpl implements MemberService {
             entityManager.getTransaction().commit();
 
             return foundMembers;
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }
+    }
+
+    @Override
+    public MemberDetail addDetail(MemberDetail memberDetail) {
+
+        EntityManager entityManager = entityManager();
+
+        try{
+
+            entityManager.getTransaction().begin();
+
+
+            entityManager.persist(memberDetail);
+
+            entityManager.getTransaction().commit();
+
+            return memberDetail;
 
         }catch (Exception e){
 

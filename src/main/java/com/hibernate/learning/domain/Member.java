@@ -27,6 +27,15 @@ public class Member {
     @OneToOne(mappedBy = "member")
     private Card card;
 
+    @OneToOne(mappedBy = "member") //BiDirectional Relationship
+    private MemberDetail memberDetail;
+
+    public void setMemberDetail(MemberDetail memberDetail){
+        memberDetail.setMember(this);
+        memberDetail.setId(this.id);
+        this.memberDetail = memberDetail;
+    }
+
     public void issueCard(Card card){
         card.assignTo(this);
         this.card = card;

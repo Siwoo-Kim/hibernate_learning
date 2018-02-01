@@ -98,6 +98,13 @@ public class ConsoleProgramTest {
 
                         }
 
+                    }else if(commands.contains("--detail")){
+
+                        if(commands.get(0).equalsIgnoreCase("save")){
+
+                            handleMemberDetailSaveCommand(commands);
+                        }
+
                     }else if(commands.get(0).equalsIgnoreCase("save")){
 
                         handleMemberSaveCommand(commands);
@@ -227,6 +234,35 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleMemberDetailSaveCommand(List<String> commands) {
+
+        if(commands.size() != 6){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save --detail [memberEmail] [city] [street] [zipcode]");
+            return;
+
+        }
+
+        try {
+
+            Member foundMember = memberService.find(commands.get(2));
+
+            MemberDetail memberDetail = memberService.addDetail(MemberDetail.builder()
+                    .id(foundMember.getId())
+                    .member(foundMember)
+                    .address(new Address(commands.get(5),commands.get(3),commands.get(4)))
+                    .build());
+
+            System.out.println(memberDetail.toString());
+
+        }catch(Exception e){
+
+            e.printStackTrace();
+
+        }
     }
 
     private static void handleMemberListCommand(List<String> commands) {
