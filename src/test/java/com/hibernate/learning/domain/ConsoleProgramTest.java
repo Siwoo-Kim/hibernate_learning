@@ -1,12 +1,11 @@
 package com.hibernate.learning.domain;
 
 import com.hibernate.learning.domain.embeddable.Address;
-import com.hibernate.learning.service.HoteServiceImpl;
-import com.hibernate.learning.service.UserService;
-import com.hibernate.learning.service.UserServiceImpl;
+import com.hibernate.learning.service.*;
 import com.hibernate.learning.utils.DBUtils;
 import org.hibernate.LazyInitializationException;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -26,11 +25,12 @@ import static com.hibernate.learning.utils.DBUtils.entityManager;
 public class ConsoleProgramTest {
 
     public enum Entity{
-        USER , HOTEL, EXIT , WRONG_VALUE
+        USER , HOTEL, SIGHT ,EXIT , WRONG_VALUE
     }
 
     public static UserService userService = new UserServiceImpl();
     public static HoteServiceImpl hoteService = new HoteServiceImpl();
+    public static SightService sightService = new SightServiceImpl();
 
     //Bootstrap for console program
     public static void main(String[] args) throws IOException {
@@ -64,12 +64,35 @@ public class ConsoleProgramTest {
             }catch (IllegalArgumentException e){
 
                 choosedEntity = Entity.WRONG_VALUE;
+
             }
 
 
             if(choosedEntity == Entity.EXIT) { break; }
 
             switch (choosedEntity) {
+
+                case SIGHT : while(true){
+                        System.out.println("Enter a command:>");
+                        String line = bufferedReader.readLine();
+                        String[] commands = line.split(" ");
+
+                    if(commands[0].equalsIgnoreCase("exit")){
+
+                        System.out.println("Terminate Program");
+                        break;
+
+                    }else if(commands[0].equalsIgnoreCase("save")) {
+
+                        handleSightSaveCommand(commands);
+
+                    }else{
+
+                        System.out.println("Command not found. Try again :<");
+
+                    }
+
+                    } break;
 
                 case HOTEL: while (true){
                     System.out.println("Enter a command:>");
@@ -162,6 +185,63 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleSightSaveCommand(String[] commands) {
+
+
+
+
+        if(commands.length < 2){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save [name] [hoursOfOperation:option] [holiday:option] [facilities:option]");
+            return;
+
+        }
+
+        ArrayList<String> commandsList = new ArrayList();
+
+        for(String string : commands){
+            commandsList.add(string);
+        }
+
+        if(commands.length < 5){
+
+            int index = 5 - commands.length;
+
+            for(int i = index - 1 ; i < 5; i++){
+                commandsList.add(i,null);
+            }
+
+            System.out.println(commandsList.toString());
+        }
+
+        Integer hoursOfOperation = null;
+
+        if(StringUtils.hasText(commandsList.get(2))) {
+
+            try {
+
+                hoursOfOperation = Integer.parseInt(commands[2]);
+
+            } catch (NumberFormatException e) {
+
+                e.printStackTrace();
+                System.out.println("hoursOfOperation is not the number");
+                System.out.println("Try again :<");
+                return;
+
+            }
+        }
+
+
+        Sight savedSight = ConsoleProgramTest.sightService.save(Sight.builder()
+            .name(commands[1]).sightDetail(new SightDetail(hoursOfOperation,commandsList.get(3),commandsList.get(4))).build());
+
+
+        System.out.println(savedSight.toString());
+
     }
 
     private static void handleAddAddressOptionalCommand(String[] commands) {
