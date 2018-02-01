@@ -1,8 +1,10 @@
 package com.hibernate.learning.service;
 import com.hibernate.learning.domain.Hotel;
+import com.hibernate.learning.domain.embeddable.Address;
 import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 
 import java.util.List;
 
@@ -19,7 +21,17 @@ public class HoteServiceImpl implements HotelService {
         try{
             entityManager.getTransaction().begin();
 
-            Hotel foundHotel = this.entityManager.find(Hotel.class,hotel.getId());
+            Hotel foundHotel =null;
+
+            try {
+
+                foundHotel = this.entityManager
+                        .createQuery("select h from Hotel h where h.name = :name", Hotel.class)
+                        .setParameter("name", hotel.getName()).getSingleResult();
+
+            }catch (NoResultException e){
+
+            }
 
             if(!ObjectUtils.isEmpty(foundHotel)) { throw new IllegalStateException(); }
 
@@ -37,6 +49,34 @@ public class HoteServiceImpl implements HotelService {
         }finally {
 
             this.entityManager.close();
+
+        }
+
+    }
+
+    @Override
+    public Hotel getHotelProxy(Long id){
+
+        entityManager = entityManager();
+
+        try{
+            entityManager.getTransaction().begin();
+
+            Hotel hotel = entityManager.getReference(Hotel.class,id);
+
+            entityManager.getTransaction().commit();
+
+            return  hotel;
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            entityManager.close();
 
         }
 
@@ -71,6 +111,83 @@ public class HoteServiceImpl implements HotelService {
 
         }
     }
+
+    @Override
+    public Hotel addAddress(String name,Address address) {
+
+        entityManager = entityManager();
+
+        try{
+
+            entityManager.getTransaction().begin();
+
+            Hotel hotel = entityManager.createQuery(
+                    "select h from Hotel h where h.name = :name",Hotel.class
+            ).setParameter("name",name).getSingleResult();
+
+            hotel.setAddress(address);
+
+            entityManager.getTransaction().commit();
+
+            return hotel;
+
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            entityManager.close();
+
+        }
+
+    }
+
+
+    @Override
+    public Hotel addOptionalAddress(String name, Address address) {
+
+        entityManager = entityManager();
+
+        try{
+
+            entityManager.getTransaction().begin();
+
+            Hotel hotel = entityManager.createQuery(
+                    "select h from Hotel h where h.name = :name",Hotel.class
+            ).setParameter("name",name).getSingleResult();
+
+            if(ObjectUtils.isEmpty(hotel.getAddress())){
+                throw new IllegalStateException();
+            }
+
+            hotel.setOptionalAddress(address);
+
+            entityManager.getTransaction().commit();
+
+            return hotel;
+
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            entityManager.close();
+
+        }
+
+    }
+
+
+
+
 }
 
 

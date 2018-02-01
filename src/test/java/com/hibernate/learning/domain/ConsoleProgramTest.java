@@ -1,11 +1,15 @@
 package com.hibernate.learning.domain;
 
+import com.hibernate.learning.domain.embeddable.Address;
 import com.hibernate.learning.service.HoteServiceImpl;
 import com.hibernate.learning.service.UserService;
 import com.hibernate.learning.service.UserServiceImpl;
 import com.hibernate.learning.utils.DBUtils;
+import org.hibernate.LazyInitializationException;
 import org.springframework.util.ObjectUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static com.hibernate.learning.utils.DBUtils.entityManager;
 
 
 public class ConsoleProgramTest {
@@ -70,24 +76,44 @@ public class ConsoleProgramTest {
                     String line = bufferedReader.readLine();
                     String[] commands = line.split(" ");
 
+
                     if(commands[0].equalsIgnoreCase("exit")){
 
                         System.out.println("Terminate Program");
                         break;
 
-                    }
+                    }else if(commands[0].equalsIgnoreCase("proxy")){
 
-                    if(commands[0].equalsIgnoreCase("save")){
+                        handleHotelProxyCommand(commands);
+
+                    }else if(commands[0].equalsIgnoreCase("save")){
 
                         handleHotelCreateCommand(commands);
 
-                    }
-
-                    if(commands[0].equalsIgnoreCase("list")){
+                    }else if(commands[0].equalsIgnoreCase("list")){
 
                         handleHotelListCommand(commands);
 
+                    }else if(commands[0].equalsIgnoreCase("addAddress")){
+
+                        if(Arrays.asList(commands).contains("--optional")){
+
+                            handleAddAddressOptionalCommand(commands);
+                            continue;
+
+                        }else {
+
+                            handleHotelAddAddressCommand(commands);
+                            continue;
+                        }
+
+                    }else{
+
+                        System.out.println("Command not found. Try again :<");
                     }
+
+
+
                 } break;
 
                 case USER: while (true) {
@@ -138,6 +164,91 @@ public class ConsoleProgramTest {
         DBUtils.close();
     }
 
+    private static void handleAddAddressOptionalCommand(String[] commands) {
+
+        if(commands.length != 6){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:addAddress --optional [name] [city] [street] [postalCode]");
+            return;
+
+        }
+
+        try {
+
+            Hotel updatedHotel = ConsoleProgramTest.hoteService.addOptionalAddress(commands[2],
+                    new Address(commands[5], commands[4], commands[3]));
+
+            System.out.println(updatedHotel.toString());
+
+        }catch (IllegalStateException e){
+
+            System.out.println("Primary Address need to be insert fisrt");
+            System.out.println("Try again :<");
+
+        }catch (NoResultException e){
+
+            System.out.println("Hotel does not exits");
+            System.out.println("Try again :<");
+
+        }
+    }
+
+    private static void handleHotelAddAddressCommand(String[] commands) {
+
+        if(commands.length != 5){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:addAddress [name] [city] [street] [postalCode]");
+            return;
+
+        }
+
+        try {
+
+            Hotel updatedHotel = ConsoleProgramTest.hoteService.addAddress(commands[1],
+                    new Address(commands[4], commands[3], commands[2]));
+            System.out.println(updatedHotel.toString());
+
+        }catch (NoResultException e){
+
+            System.out.println("Hotel does not exits");
+            System.out.println("Try again :<");
+
+        }
+
+    }
+
+    private static void handleHotelProxyCommand(String[] commands) {
+
+        if(commands.length != 2){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:proxy [id]");
+            return;
+
+        }
+
+        Long id =  Long.parseLong(commands[1]);
+
+        Hotel hotel = ConsoleProgramTest.hoteService.getHotelProxy(id);
+
+        System.out.println("Hotel class : "+hotel.getClass());
+
+        try{
+
+            hotel.getName();
+
+        }catch (LazyInitializationException e){
+
+            System.out.println("LazyInitializationException must me occurred, because it is not in transaction");
+            System.out.println("Also notice that Proxy's method must be called in transaction otherwise you will see the exception again!");
+
+        }
+
+
+    }
+
     private static void handleHotelListCommand(String[] commands) {
 
         ConsoleProgramTest.hoteService.getHotels().stream()
@@ -148,22 +259,20 @@ public class ConsoleProgramTest {
     private static void handleHotelCreateCommand(String... commands) {
 
 
-        if(commands.length < 5){
+        if(commands.length < 3){
 
             System.out.println("Command usage is wrong");
-            System.out.println("Usage:save [id] [name] [grade] [description]");
+            System.out.println("Usage:save [name] [grade] [description]");
             return;
 
         }
 
-
-        String id = commands[1];
-        String name = commands[2];
-        String gradeStr = commands[3];
+        String name = commands[1];
+        String gradeStr = commands[2];
 
         String description = new String();
 
-        for(int i=4; i < commands.length; i++){
+        for(int i=3; i < commands.length; i++){
 
             description += commands[i]+" ";
 
@@ -184,20 +293,20 @@ public class ConsoleProgramTest {
 
         }
 
-        Hotel hotel = Hotel.builder().id(id).name(name).grade(grade).description(description).build();
+        Hotel hotel = Hotel.builder().name(name).grade(grade).description(description).build();
 
         try{
 
             Hotel savedHotel = ConsoleProgramTest.hoteService.save(hotel);
 
             System.out.println("Hotel is created");
-            System.out.println("Hotel ID : "+savedHotel.getId());
-            System.out.println("Hotel Name : "+savedHotel.getName());
-            System.out.println("Hotel Grade : "+savedHotel.getGrade());
-
+            System.out.println(savedHotel.toString());
 
 
         }catch (Exception e){
+
+            System.out.println("Hotel name already exists ");
+            System.out.println("Try another name");
 
         }
 
