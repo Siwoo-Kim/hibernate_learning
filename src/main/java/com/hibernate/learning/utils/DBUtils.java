@@ -18,4 +18,5 @@ public class DBUtils {
     public static void close(){
         DBUtils.entityManagerFactory.close();
     }
+
 }

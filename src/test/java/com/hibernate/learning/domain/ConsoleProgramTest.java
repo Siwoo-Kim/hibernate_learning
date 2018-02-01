@@ -4,6 +4,7 @@ import com.hibernate.learning.domain.embeddable.Address;
 import com.hibernate.learning.service.*;
 import com.hibernate.learning.utils.DBUtils;
 import org.hibernate.LazyInitializationException;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -12,6 +13,7 @@ import javax.persistence.NoResultException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,12 +27,14 @@ import static com.hibernate.learning.utils.DBUtils.entityManager;
 public class ConsoleProgramTest {
 
     public enum Entity{
-        USER , HOTEL, SIGHT ,EXIT , WRONG_VALUE
+        USER , HOTEL, SIGHT , MEMBER ,EXIT , WRONG_VALUE
     }
 
     public static UserService userService = new UserServiceImpl();
     public static HoteServiceImpl hoteService = new HoteServiceImpl();
     public static SightService sightService = new SightServiceImpl();
+    public static MemberService memberService = new MemberServiceImpl();
+    public static CardService cardService = new CardServiceImpl();
 
     //Bootstrap for console program
     public static void main(String[] args) throws IOException {
@@ -71,6 +75,44 @@ public class ConsoleProgramTest {
             if(choosedEntity == Entity.EXIT) { break; }
 
             switch (choosedEntity) {
+
+                case MEMBER : while (true){
+                    System.out.println("Enter a command:>");
+                    String line = bufferedReader.readLine();
+                    List<String> commands = Arrays.asList(line.split(" "));
+
+                    if(commands.get(0).equalsIgnoreCase("exit")){
+
+                        System.out.println("Terminate Program");
+                        break;
+
+                    }else if(commands.contains("--card")){
+
+                        if(commands.get(0).equalsIgnoreCase("save")){
+
+                            handleCardSaveCommand(commands);
+
+                        }else if(commands.get(0).equalsIgnoreCase("assign")){
+
+                            handleCardAssignCommand(commands);
+
+                        }
+
+                    }else if(commands.get(0).equalsIgnoreCase("save")){
+
+                        handleMemberSaveCommand(commands);
+
+                    }else if(commands.get(0).equalsIgnoreCase("list")){
+
+                        handleMemberListCommand(commands);
+
+                    }else {
+
+                        System.out.println("Command not found. Try again :<");
+
+                    }
+
+                } break;
 
                 case SIGHT : while(true){
                         System.out.println("Enter a command:>");
@@ -185,6 +227,80 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleMemberListCommand(List<String> commands) {
+
+        memberService
+                .findAll()
+                .stream().map(Member::toString)
+                .forEach(System.out::println);
+
+    }
+
+    private static void handleCardAssignCommand(List<String> commands) {
+
+        if(commands.size() != 4){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:assign --card [cardNumber] [memberEmail]");
+            return;
+
+        }
+
+        Member foundMember = memberService.find(commands.get(3));
+
+        Card card = cardService.find(commands.get(2));
+
+        cardService.assign(foundMember,card);
+
+        System.out.println(card.toString());
+
+    }
+
+    public static DateTimeFormatter cardExpiredDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    private static void handleCardSaveCommand(List<String> commands) {
+
+        if(commands.size() != 5){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save --card [cardNumber] [yyyy-MM-dd,cardExpireDate] [enabled:true|false]");
+            return;
+
+        }
+
+
+        cardService.save(
+                Card.builder()
+                        .cardNumber(commands.get(2))
+                .expireDate(LocalDate.parse(commands.get(3),cardExpiredDateFormatter))
+                .enabled(Boolean.parseBoolean(commands.get(4)))
+                .build()
+        );
+
+    }
+
+    private static void handleMemberSaveCommand(List<String> commands) {
+
+        if(commands.size() != 4){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save [email] [username] [age]");
+            return;
+
+        }
+
+        Member savedMember = memberService.save(
+                Member.builder()
+                .email(commands.get(1))
+                .username(commands.get(2))
+                .age(Integer.parseInt(commands.get(3)))
+                .build()
+        );
+
+        System.out.println(savedMember.toString());
+
     }
 
     private static void handleSightSaveCommand(String[] commands) {

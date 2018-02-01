@@ -20,5 +20,15 @@ public class Member {
     @Column(name="NAME")
     private String username;
 
+    private String email;
+
     private Integer age;
+
+    @OneToOne(mappedBy = "member")
+    private Card card;
+
+    public void issueCard(Card card){
+        card.assignTo(this);
+        this.card = card;
+    }
 }
