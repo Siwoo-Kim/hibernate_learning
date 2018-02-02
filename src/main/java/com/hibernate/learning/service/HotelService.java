@@ -24,4 +24,10 @@ public interface HotelService {
 
 
     List<HotelReview> getReviews(String hotelName);
+
+    List<HotelReview> getHotelReviewList(String hotelName, int maxResult);
+
+    List<HotelReview> findByHotel(Hotel hotel, int startRow, int maxResult);
+
+    Hotel findByName(String hotelName);
 }

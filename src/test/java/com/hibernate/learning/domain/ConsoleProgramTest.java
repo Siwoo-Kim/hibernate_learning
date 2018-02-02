@@ -190,8 +190,15 @@ public class ConsoleProgramTest {
 
                         }else if(commands[0].equalsIgnoreCase("list")){
 
-                            handleHotelReviewListCommand(commandsList);
+                            if(commandsList.stream().anyMatch(str -> str.contains("-fetch="))){
 
+                                handleHotelReviewListWithFecthCommand(commandsList);
+
+                            }else {
+
+                                handleHotelReviewListCommand(commandsList);
+
+                            }
                         }
 
                     }else{
@@ -249,6 +256,34 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleHotelReviewListWithFecthCommand(List<String> commandsList) {
+
+        if(commandsList.size() != 4){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:list --review -fetch=[howMany] [hotelName]");
+            return;
+
+        }
+
+        Optional<String> fetchOptional =  commandsList.stream()
+                                .filter(str -> str.contains("-fetch"))
+                                .findFirst();
+
+
+        String fetchOption = fetchOptional.orElseThrow(IllegalStateException::new);
+
+        log.warning(fetchOption.substring(7));
+
+        int maxResult = Integer.parseInt(fetchOption.substring(7));
+
+
+        hoteService.getHotelReviewList(commandsList.get(3),maxResult)
+                .forEach(System.out::println);
+
+
     }
 
     private static void handleHotelReviewListCommand(List<String> commandsList) {

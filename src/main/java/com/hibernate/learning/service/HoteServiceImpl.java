@@ -8,6 +8,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 
 import java.util.List;
 
@@ -281,6 +282,45 @@ public class HoteServiceImpl implements HotelService {
             closeCurrentEntityMananger();
 
         }
+    }
+
+    @Override
+    public List<HotelReview> getHotelReviewList(String hotelName, int maxResult){
+
+        try{
+
+            Hotel hotel = findByName(hotelName);
+
+            if(ObjectUtils.isEmpty(hotel)) { throw new IllegalStateException("Hotel does not exits"); }
+
+            return findByHotel(hotel,0,maxResult);
+
+        }finally {
+
+            DBUtils.closeCurrentEntityMananger();
+        }
+    }
+
+    @Override
+    public List<HotelReview> findByHotel(Hotel hotel, int startRow, int maxResult){
+
+        TypedQuery<HotelReview> typedQuery = DBUtils.currentEntityManager()
+                .createQuery("select r From HotelReview  r " +
+                        "where r.hotel = :hotel order by r.id desc",HotelReview.class);
+
+        typedQuery.setParameter("hotel",hotel);
+        typedQuery.setFirstResult(startRow);
+        typedQuery.setMaxResults(maxResult);
+
+        return typedQuery.getResultList();
+    }
+
+    @Override
+    public Hotel findByName(String hotelName){
+        EntityManager entityManager = currentEntityManager();
+        return entityManager.createQuery(
+                "select h from Hotel h where h.name = :name",Hotel.class
+        ).setParameter("name",hotelName).getSingleResult();
     }
 
 }
