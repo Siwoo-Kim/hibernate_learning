@@ -1,5 +1,6 @@
 package com.hibernate.learning.service;
 import com.hibernate.learning.domain.Hotel;
+import com.hibernate.learning.domain.HotelReview;
 import com.hibernate.learning.domain.embeddable.Address;
 import org.springframework.util.ObjectUtils;
 
@@ -63,6 +64,36 @@ public class HoteServiceImpl implements HotelService {
             entityManager.getTransaction().begin();
 
             Hotel hotel = entityManager.getReference(Hotel.class,id);
+
+            entityManager.getTransaction().commit();
+
+            return  hotel;
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            entityManager.close();
+
+        }
+
+    }
+
+    @Override
+    public Hotel getHotelByName(String name) {
+
+        entityManager = entityManager();
+
+        try{
+            entityManager.getTransaction().begin();
+
+            Hotel hotel = entityManager.createQuery(
+                    "select h from Hotel h where h.name = :name",Hotel.class
+            ).setParameter("name",name).getSingleResult();
 
             entityManager.getTransaction().commit();
 
@@ -185,7 +216,38 @@ public class HoteServiceImpl implements HotelService {
 
     }
 
+    @Override
+    public HotelReview addReview(HotelReview hotelReview) {
 
+        entityManager = entityManager();
+
+        try{
+
+            entityManager.getTransaction().begin();
+
+            if(ObjectUtils.isEmpty(hotelReview.getHotel())){
+                throw new IllegalStateException("HotelReview must contain hotel entity");
+            }
+
+            entityManager.persist(hotelReview);
+
+            entityManager.getTransaction().commit();
+
+            return hotelReview;
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            entityManager.close();
+
+        }
+
+    }
 
 
 }

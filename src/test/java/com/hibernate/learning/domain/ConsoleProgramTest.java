@@ -3,6 +3,7 @@ package com.hibernate.learning.domain;
 import com.hibernate.learning.domain.embeddable.Address;
 import com.hibernate.learning.service.*;
 import com.hibernate.learning.utils.DBUtils;
+import lombok.extern.java.Log;
 import org.hibernate.LazyInitializationException;
 import org.springframework.format.datetime.DateFormatter;
 import org.springframework.util.ObjectUtils;
@@ -20,10 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.hibernate.learning.utils.DBUtils.entityManager;
 
 
+@Log
 public class ConsoleProgramTest {
 
     public enum Entity{
@@ -147,7 +150,7 @@ public class ConsoleProgramTest {
                     System.out.println("Enter a command:>");
                     String line = bufferedReader.readLine();
                     String[] commands = line.split(" ");
-
+                    List<String> commandsList = Arrays.asList(commands);
 
                     if(commands[0].equalsIgnoreCase("exit")){
 
@@ -158,7 +161,7 @@ public class ConsoleProgramTest {
 
                         handleHotelProxyCommand(commands);
 
-                    }else if(commands[0].equalsIgnoreCase("save")){
+                    }else if(commands[0].equalsIgnoreCase("save") && !commandsList.stream().anyMatch(str -> str.contains("--"))){
 
                         handleHotelCreateCommand(commands);
 
@@ -177,6 +180,14 @@ public class ConsoleProgramTest {
 
                             handleHotelAddAddressCommand(commands);
                             continue;
+                        }
+
+                    }else if(commandsList.contains("--review")){
+
+                        if(commands[0].equalsIgnoreCase("save")){
+
+                            handleHotelReviewSaveCommand(commandsList);
+
                         }
 
                     }else{
@@ -234,6 +245,58 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleHotelReviewSaveCommand(List<String> commandsList) {
+
+
+        if(commandsList.size() < 4){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save --review [hotelName] [rate] [comment]");
+            return;
+
+        }
+
+        Hotel hotel = null;
+        int rate = 0;
+
+        try {
+
+            hotel = hoteService.getHotelByName(commandsList.get(2));
+
+        }catch (NoResultException e){
+
+            System.out.println("Hotel does not exists");
+            System.out.println("Try again :<");
+
+        }
+
+
+        try {
+
+            rate = Integer.parseInt(commandsList.get(3));
+
+        }catch (NumberFormatException e){
+
+            System.out.println("Please enter a number(0-5) for rate");
+
+        }
+
+        String comment = commandsList.subList(4,commandsList.size()-1)
+                .stream()
+                .reduce("",(str1,str2)-> str1.concat(" "+str2) );
+
+
+        HotelReview hotelReview = HotelReview.builder()
+                .hotel(hotel)
+                .rate(rate)
+                .comment(comment)
+                .build();
+
+        log.warning(hotelReview.toString());
+        System.out.println(hoteService.addReview(hotelReview));
+
     }
 
     private static void handleMemberDetailSaveCommand(List<String> commands) {
