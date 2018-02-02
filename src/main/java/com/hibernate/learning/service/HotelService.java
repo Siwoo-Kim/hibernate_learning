@@ -23,4 +23,5 @@ public interface HotelService {
     HotelReview addReview(HotelReview hotelReview);
 
 
+    List<HotelReview> getReviews(String hotelName);
 }

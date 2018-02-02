@@ -165,7 +165,7 @@ public class ConsoleProgramTest {
 
                         handleHotelCreateCommand(commands);
 
-                    }else if(commands[0].equalsIgnoreCase("list")){
+                    }else if(commands[0].equalsIgnoreCase("list")&& !commandsList.stream().anyMatch(str -> str.contains("--")) ){
 
                         handleHotelListCommand(commands);
 
@@ -187,6 +187,10 @@ public class ConsoleProgramTest {
                         if(commands[0].equalsIgnoreCase("save")){
 
                             handleHotelReviewSaveCommand(commandsList);
+
+                        }else if(commands[0].equalsIgnoreCase("list")){
+
+                            handleHotelReviewListCommand(commandsList);
 
                         }
 
@@ -245,6 +249,23 @@ public class ConsoleProgramTest {
         }
 
         DBUtils.close();
+    }
+
+    private static void handleHotelReviewListCommand(List<String> commandsList) {
+
+
+        if(commandsList.size() < 3){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:list --review [hotelName]");
+            return;
+
+        }
+
+        hoteService.getReviews(commandsList.get(2)).stream()
+                .map(HotelReview::toString)
+                .forEach(System.out::println);
+
     }
 
     private static void handleHotelReviewSaveCommand(List<String> commandsList) {

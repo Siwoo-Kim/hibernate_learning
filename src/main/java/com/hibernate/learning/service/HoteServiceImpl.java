@@ -2,6 +2,8 @@ package com.hibernate.learning.service;
 import com.hibernate.learning.domain.Hotel;
 import com.hibernate.learning.domain.HotelReview;
 import com.hibernate.learning.domain.embeddable.Address;
+import com.hibernate.learning.utils.DBUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.persistence.EntityManager;
@@ -249,6 +251,37 @@ public class HoteServiceImpl implements HotelService {
 
     }
 
+    @Override
+    public List<HotelReview> getReviews(String hotelName){
+
+        entityManager = currentEntityManager();
+
+        try{
+
+            entityManager.getTransaction().begin();
+
+            List<HotelReview> hotelReviewList = entityManager.createQuery(
+                    "select hr from HotelReview hr join hr.hotel h " +
+                            "where h.name = :hotelName",HotelReview.class
+            ).setParameter("hotelName",hotelName).getResultList();
+
+
+            entityManager.getTransaction().commit();
+
+            return  hotelReviewList;
+
+        }catch (Exception e){
+
+            e.printStackTrace();
+            entityManager.getTransaction().rollback();
+            throw e;
+
+        }finally {
+
+            closeCurrentEntityMananger();
+
+        }
+    }
 
 }
 
