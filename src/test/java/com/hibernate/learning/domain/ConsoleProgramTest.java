@@ -30,7 +30,7 @@ import static com.hibernate.learning.utils.DBUtils.entityManager;
 public class ConsoleProgramTest {
 
     public enum Entity{
-        USER , HOTEL, SIGHT , MEMBER ,EXIT , WRONG_VALUE
+        USER , HOTEL, SIGHT , MEMBER , ITINERARY , EXIT , WRONG_VALUE
     }
 
     public static UserService userService = new UserServiceImpl();
@@ -38,13 +38,16 @@ public class ConsoleProgramTest {
     public static SightService sightService = new SightServiceImpl();
     public static MemberService memberService = new MemberServiceImpl();
     public static CardService cardService = new CardServiceImpl();
+    public static ItineraryService itineraryService = new ItineraryServiceImpl();
+
+    private static BufferedReader bufferedReader;
 
     //Bootstrap for console program
     public static void main(String[] args) throws IOException {
 
         DBUtils.init();
 
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
 
         while(true){
@@ -250,12 +253,158 @@ public class ConsoleProgramTest {
 
                 } break;
 
+                case ITINERARY: while(true){
+
+                    System.out.println("Enter a command:>");
+                    String line = bufferedReader.readLine();
+                    List<String> commands = Arrays.asList( line.split(" ") );
+
+                    if (commands.get(0).equalsIgnoreCase("exit")) {
+
+                        System.out.println("Terminate Program");
+                        break;
+
+                    }else if(commands.get(0).equalsIgnoreCase("save")){
+
+                        handleItinerarySaveCommand(commands);
+
+                    }else if(commands.get(0).equalsIgnoreCase("list")){
+
+                        handleItineraryListCommand();
+
+                    }else if(commands.stream().anyMatch(str -> str.contains("--"))){
+
+                        if (commands.contains("--site") && commands.get(0).equalsIgnoreCase("delete")) {
+
+                            handleItineraryDeleteSiteCommand(commands);
+
+                        }
+
+                    }
+                }
+
                 default: System.out.println("TRY AGAIN :>");
             }
 
         }
 
         DBUtils.close();
+    }
+
+    private static void handleItineraryDeleteSiteCommand(List<String> commands) {
+
+        if(commands.size() != 3){
+
+                System.out.println("Command usage is wrong");
+                System.out.println("Usage:delete --site [itineraryName]");
+                return;
+
+        }
+
+        Itinerary itinerary = null;
+
+        try {
+
+            itinerary = itineraryService.findItinerary(commands.get(2));
+
+        }catch (Exception e){
+
+            System.out.println("Itinerary of the name does not exists. Try again :<");
+            return;
+
+        }
+
+
+        List<String> sites = itinerary.getSites();
+
+        for(int i=0; i<sites.size() ; i++){
+            System.out.println(i+1 + " : " + sites.get(i));
+        }
+
+        System.out.printf("Type the number you want delete:>");
+
+        Integer index =null;
+
+        try {
+
+            index = Integer.parseInt(bufferedReader.readLine());
+            index--;
+
+        }catch (IOException | NumberFormatException e){
+
+            e.printStackTrace();
+            System.out.println("You typed wrong format, try again:>");
+            return;
+
+        }
+
+        itinerary.deleteSite(index);
+
+        itinerary = itineraryService.save(itinerary);
+
+        log.warning(itinerary::toString);
+
+    }
+
+    private static void handleItineraryListCommand() {
+
+
+        itineraryService.findAll().stream()
+                .forEach(itinerary -> System.out.println(itinerary));
+
+    }
+
+    private static void handleItinerarySaveCommand(List<String> commands) throws IOException {
+
+
+
+
+        if(commands.size() != 3){
+
+            System.out.println("Command usage is wrong");
+            System.out.println("Usage:save [name] [description]");
+            return;
+
+        }
+
+
+
+
+        System.out.println("Enter the number of site you want save :> ");
+        int size = 0;
+
+        try {
+
+            size = Integer.parseInt(StringUtils.trimAllWhitespace(bufferedReader.readLine()));
+
+        }catch (IOException | NumberFormatException e){
+
+            e.printStackTrace();
+            System.out.println("You typed wrong format, try again:>");
+            return;
+
+        }
+
+        System.out.println("Enter the site name and type enter:>");
+        List<String> sites = new ArrayList<>();
+
+        for(int i=0;i<size;i++){
+            System.out.printf(i+1 + " site:>");
+            sites.add(bufferedReader.readLine());
+        }
+
+
+        Itinerary itinerary = Itinerary.builder()
+                .name(commands.get(1))
+                .description(commands.get(2))
+                .sites(sites)
+                .build();
+
+        itinerary = itineraryService.save(itinerary);
+
+
+        log.warning(itinerary::toString);
+
     }
 
     private static void handleHotelReviewListWithFecthCommand(List<String> commandsList) {
