@@ -20,5 +20,6 @@ public class ConsoleApplication {
 
         System.out.println(memberRepository.toString());
 
+
     }
 }
