@@ -1,5 +1,6 @@
 package com.hibernate.learning.domain;
 
+import com.hibernate.learning.domain.embeddable.ArrangeTimeTable;
 import lombok.*;
 import lombok.extern.java.Log;
 
@@ -34,11 +35,20 @@ public class Itinerary {
 
     private String description;
 
+
+
+    //THIS IS NON-SENSE BUT MAKING IT BECAUSE OF LEARNING PURPOSE
+    @ElementCollection  //EMBEDDABLE TYPE ALSO CAN BE ELEMENTCOLLECTION WHICH SAVED IN
+                        //DIFFERENT TABLE
+    @CollectionTable(name="ITINERARY_TIMETABLE",
+    joinColumns = @JoinColumn(name="ITINERARY_ID"))
+    @OrderColumn(name="TIMETABLE_LIST")
+    @Builder.Default
+    private List<ArrangeTimeTable> arrangeTimeTable = new ArrayList<>();
+
     public void removeSites(){
         if(!this.sites.isEmpty()){
-            for(int i=0;i<this.sites.size();i++){
-                this.sites.remove(i);
-            }
+            this.sites.clear();
         }
     }
 

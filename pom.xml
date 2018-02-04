@@ -45,6 +45,10 @@
             <version>2.0.2.RELEASE</version>
         </dependency>
 
+        <!--
+            hibernate-entitymanager library has dependencies of
+            hibernate-core , hibernate-jpa-2.1-api.
+        -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
